@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#172554">
+<title>¿Me Compensa?</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#172033;background:#f3f6fb}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;max-width:760px;margin-inline:auto}
+header{background:#172554;color:white;padding:24px 20px;border-radius:20px;margin-bottom:18px}
+h1{margin:0 0 6px;font-size:2rem} header p{margin:0;color:#dbeafe}
+main{display:grid;gap:16px}
+.card{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 5px 18px #1725540b}
+h2{font-size:1.1rem;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:.9rem;font-weight:650;margin-bottom:6px}
+input{width:100%;font:inherit;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#172033}
+small{display:block;color:#64748b;margin-top:5px;font-weight:400}
+.result{background:#eff6ff;border-color:#bfdbfe}
+.big{font-size:2rem;font-weight:800;letter-spacing:-.04em;margin:4px 0}
+.status{font-weight:750;font-size:1rem}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.metric{background:#fff;border:1px solid #dbeafe;border-radius:12px;padding:12px}
+.metric span{display:block;color:#64748b;font-size:.82rem}.metric strong{font-size:1.1rem}
+button{font:inherit;border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer}
+.primary{background:#172554;color:white}.secondary{background:#e2e8f0;color:#172033}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.note{color:#64748b;font-size:.86rem;line-height:1.45}
+@media(max-width:440px){.grid{grid-template-columns:1fr 1fr}body{padding:12px}.card{padding:15px}.big{font-size:1.7rem}}
+</style>
+</head>
+<body>
+<header>
+  <h1>¿Me Compensa?</h1>
+  <p>Calcula si merece la pena comprar, reparar y vender.</p>
+</header>
+<main>
+<section class="card">
+<h2>1. Costes de la operación</h2>
+<div class="grid">
+<div><label for="buy">Precio de compra (€)</label><input id="buy" type="number" min="0" step="0.01" value="50"></div>
+<div><label for="repair">Reparación y piezas (€)</label><input id="repair" type="number" min="0" step="0.01" value="20"></div>
+<div><label for="extras">Otros gastos (€)</label><input id="extras" type="number" min="0" step="0.01" value="5"><small>Transporte, limpieza, comisiones…</small></div>
+<div><label for="sell">Precio de venta (€)</label><input id="sell" type="number" min="0" step="0.01" value="110"></div>
+</div>
+</section>
+<section class="card result" aria-live="polite">
+<h2>2. Resultado estimado</h2>
+<div id="status" class="status">¡Parece que compensa!</div>
+<div id="profit" class="big">35,00 €</div>
+<div id="summary">Beneficio estimado después de descontar los costes introducidos.</div>
+<div class="metrics">
+<div class="metric"><span>Coste total</span><strong id="total">75,00 €</strong></div>
+<div class="metric"><span>Margen sobre venta</span><strong id="margin">31,8 %</strong></div>
+<div class="metric"><span>Precio mínimo para no perder</span><strong id="breakEven">75,00 €</strong></div>
+<div class="metric"><span>Beneficio por cada 100 € vendidos</span><strong id="per100">31,82 €</strong></div>
+</div>
+<div class="actions"><button class="primary" id="reset">Restablecer</button><button class="secondary" id="share">Compartir resultado</button></div>
+</section>
+<section class="card">
+<h2>Cómo interpretar el resultado</h2>
+<p class="note">El cálculo es una estimación con los importes que introduzcas. No incluye impuestos ni el valor de tu tiempo, salvo que los añadas en “Otros gastos”. Comprueba el precio real al que se vende el producto, no solo el precio que otros anuncian.</p>
+</section>
+</main>
+<script>
+const fields=['buy','repair','extras','sell'];
+const euro=n=>n.toLocaleString('es-ES',{style:'currency',currency:'EUR'});
+const num=id=>Math.max(0,Number(document.getElementById(id).value)||0);
+function calculate(){
+ const buy=num('buy'), repair=num('repair'), extras=num('extras'), sell=num('sell');
+ const total=buy+repair+extras, profit=sell-total, margin=sell>0?profit/sell*100:0;
+ document.getElementById('profit').textContent=(profit<0?'−':'')+euro(Math.abs(profit));
+ document.getElementById('total').textContent=euro(total);
+ document.getElementById('margin').textContent=(sell>0?margin:0).toLocaleString('es-ES',{maximumFractionDigits:1})+' %';
+ document.getElementById('breakEven').textContent=euro(total);
+ document.getElementById('per100').textContent=euro(sell>0?profit/sell*100:0);
+ const status=document.getElementById('status'), summary=document.getElementById('summary');
+ if(profit>0){status.textContent='¡Parece que compensa!';summary.textContent='Te quedarían '+euro(profit)+' antes de impuestos y del valor de tu tiempo.';}
+ else if(profit===0){status.textContent='Vas justo: no ganas ni pierdes';summary.textContent='Recuperas los costes, pero no obtienes beneficio.';}
+ else {status.textContent='Ojo: podrías perder dinero';summary.textContent='Vender al precio indicado supondría perder '+euro(Math.abs(profit))+'.';}
+}
+fields.forEach(id=>document.getElementById(id).addEventListener('input',calculate));
+document.getElementById('reset').addEventListener('click',()=>{document.getElementById('buy').value=0;document.getElementById('repair').value=0;document.getElementById('extras').value=0;document.getElementById('sell').value=0;calculate();});
+document.getElementById('share').addEventListener('click',async()=>{
+ const text='¿Me Compensa?\\nCompra: '+euro(num('buy'))+'\\nReparación: '+euro(num('repair'))+'\\nOtros gastos: '+euro(num('extras'))+'\\nVenta: '+euro(num('sell'))+'\\nBeneficio estimado: '+document.getElementById('profit').textContent;
+ if(navigator.share){try{await navigator.share({title:'¿Me Compensa?',text});}catch(e){}}
+ else if(navigator.clipboard){try{await navigator.clipboard.writeText(text);alert('Resultado copiado.');}catch(e){prompt('Copia el resultado:',text);}}
+ else prompt('Copia el resultado:',text);
+});
+calculate();
+</script>
+</body>
+</html>
